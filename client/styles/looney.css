@@ -1,0 +1,18 @@
+:root {
+    --text-color: #fff;
+    /*--highlight-color: #fb2628;*/
+    --highlight-color: #FF8970;
+}
+
+.looney-syllable {
+    color: var(--text-color);
+}
+
+.looney-syllable--visited {
+    color: var(--highlight-color);
+}
+
+.looney-space {
+    display: inline-block;
+    width: 0.3em;
+}

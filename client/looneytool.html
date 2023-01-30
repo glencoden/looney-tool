@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset='utf-8'>
+    <title>LOONEY TOOL</title>
+    <link rel="stylesheet" type="text/css" href="styles/reset.css">
+    <link rel="stylesheet" type="text/css" href="styles/looney.css">
+    <link rel="stylesheet" type="text/css" href="styles/app.css">
+    <script type="text/javascript" src="vendor/jquery.js"></script>
+    <script type="text/javascript" src="vendor/hyphenator.js"></script>
+    <script type="text/javascript" src="vendor/hypenator-patterns/de.js"></script>
+    <script type="text/javascript" src="vendor/hypenator-patterns/en-gb.js"></script>
+    <script type="text/javascript" src="vendor/hypenator-patterns/en-us.js"></script>
+    <script type="text/javascript" src="scripts/looney.js"></script>
+    <script type="text/javascript" src="scripts/app.js"></script>
+</head>
+<body>
+
+    <div class="app" id="app">
+
+        <div class="screen" id="screen-settings">
+
+            <h1>Settings</h1>
+
+            <h3>Show Setlist</h3>
+
+            <select id="showSetlist" onchange="app.showtime.init()"></select>
+            <button onclick="app.showtime.init()">Reload</button>
+
+            <hr>
+
+            <h3>Fullscreen</h3>
+            <button onclick="app.fullscreen.show()">Launch</button>
+            <button onclick="app.fullscreen.hide()">Exit</button>
+
+            <hr>
+
+            <h3>Backup-File</h3>
+            <button onclick="app.file.save()">Save</button>
+
+            <h4>Load archived Backup-File</h4>
+            <input style="width: 300px;" onchange="app.file.load()" id="fileLoader" type="file" name="files"></input>
+
+            <hr>
+
+            <p id="version"></p>
+
+        </div>
+
+        <div class="screen" id="screen-editor">
+
+            <div class="editor">
+
+                <h1>Editor</h1>
+
+                <div class="column editor__songlist">
+
+                    <div class="column__inner">
+
+                        <h3>Songs</h3>
+
+                        <select id="allSongs" name="currentSong" size="20" onchange="app.editor.selectSong()">
+                        </select>
+
+                        <button id="btn-song-new" onclick="app.editor.newSong()">New</button>
+                        <button id="btn-setlist-addsong" onclick="app.editor.addToSetlist()">&#8594;</button>
+
+                    </div>
+
+                </div>
+
+                <div class="column editor__text" style="width: 60%;">
+
+                    <div class="column__inner">
+
+                        <h3>Song</h3>
+
+                        <h4>Title</h4>
+
+                        <input type="text" id="song-title"></input>
+
+                        <h4>Lyrics</h4>
+
+                        <textarea class="editor__text__area" id="song-lyrics"></textarea>
+
+                        <button id="btn-song-save" onclick="app.editor.saveSong()">Save</button>
+                        <button id="btn-song-delete" onclick="app.editor.deleteSong()">Delete</button>
+
+                        <hr>
+
+                        <select id="language" style="width: 200px;">
+                            <option value="en-gb">British English</option>
+                            <option value="en-us">American English</option>
+                            <option value="de">German</option>
+                        </select>
+
+                        <button id="btn-song-findsyllables" onclick="app.editor.findSyllables()">Find Syllables</button>
+
+                    </div>
+
+                </div>
+
+                <div class="column editor__setlist" style="width: 20%;">
+
+                    <div class="column__inner">
+
+                        <h3>Setlists</h3>
+
+                        <select id="allSetlists" name="currentSetlist" onchange="app.editor.selectSetlist()">
+                        </select>
+
+                        <hr>
+
+                        <h3>Edit Setlist</h3>
+
+                        <h4>Title</h4>
+
+                        <input type="text" id="setlist-title"></input>
+
+                        <h4>Songlist</h4>
+
+                        <select id="setlist" size="15" id="setlist" onchange="app.editor.selectSetlistSong()">
+                        </select>
+
+                        <h4>Song</h4>
+
+                        <!--<button id="btn-setlist-songup" onclick="app.editor.songUp()">&#8593;</button>
+                        <button id="btn-setlist-songdown" onclick="app.editor.songDown()">&#8595;</button>-->
+
+                        <button id="btn-setlist-removesong" onclick="app.editor.removeFromSetlist()">&#8592;</button>
+
+                        <hr>
+
+                        <h4>Setlist</h4>
+
+                        <button id="btn-setlist-save" onclick="app.editor.saveSetlist()">Save</button>
+                        <button id="btn-setlist-new" onclick="app.editor.newSetlist()">New</button>
+                        <button id="btn-setlist-delete" onclick="app.editor.deleteSetlist()">Delete</button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="screen screen--full" id="screen-show">
+
+            <div class="show">
+
+                <p class="show__title" id="show-title"></p>
+
+                <img class="show__logo" src="images/logo-white.png" />
+
+                <div class="show__container">
+
+                    <div class="show__teleprompter">
+
+                        <div class="show__teleprompter__scroller" id="teleprompter">
+
+                            <div class="show__vertical">
+
+                                <p class="show__teleprompter__lyrics show__teleprompter__lyrics--previous"
+                                   id="show-previous"></p>
+
+                            </div>
+
+                            <div class="show__vertical">
+
+                                <p class="show__teleprompter__lyrics show__teleprompter__lyrics--current"
+                                   id="show-current"></p>
+
+                            </div>
+
+                            <div class="show__vertical">
+
+                                <p class="show__teleprompter__lyrics show__teleprompter__lyrics--next"
+                                   id="show-next"></p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

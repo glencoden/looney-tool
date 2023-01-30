@@ -1,0 +1,230 @@
+:root {
+    /*--headline-color: #ffff00;*/
+    /*--background-color: #00688B;*/
+    --headline-color: #FFD36B;
+    --background-color: #1A4EC3;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
+h1, h2, h3, h4, p, button, input, textarea, select {
+    font-family: 'AvantGardeGothEF', sans-serif;
+    font-size: 12pt;
+    color: var(--background-color);
+}
+
+h1, h2, h3, h4 {
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 25pt;
+    background-color: var(--background-color);
+    color: #9AC0CD;
+}
+
+h2 {
+    font-size: 18pt;
+}
+
+h3 {
+    font-size: 15pt;
+}
+
+h4 {
+    font-size: 12pt;
+}
+
+hr {
+    border: 1px solid var(--background-color);
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+@font-face {
+    font-family: "AvantGardeGothEF";
+    src: url(../fonts/AvantGardGothEF-Book.otf) format("opentype");
+}
+
+/* form */
+
+button {
+    border: 2px solid var(--background-color);
+    background-color: #eee;
+    padding: 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+button:hover {
+    border: 2px solid #000;
+    background-color: #fff;
+    color: #000;
+}
+
+input, textarea, select {
+    border: 2px solid var(--background-color);
+    background-color: #eee;
+    padding: 10px;
+    font-weight: bold;
+}
+
+select {
+    cursor: pointer;
+}
+
+input {
+    width: 100%;
+}
+
+input[disabled], textarea[disabled], select[disabled], button[disabled] {
+    opacity: 0.5;
+}
+
+/* layout */
+
+.app {
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-color);
+}
+
+.screen {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    padding: 20px;
+    margin: 20px;
+    background-color: #9AC0CD;
+}
+
+.screen--full {
+    margin: 0px;
+    background-color: transparent;
+}
+
+.column {
+    float: left;
+    height: 100%;
+}
+
+.column__inner {
+    padding-right: 40px;
+}
+
+/* editor */
+
+.editor select {
+    width: 100%;
+    padding: 10px;
+}
+
+.editor__songlist {
+    width: 20%;
+}
+
+.editor__setlist {
+    width: 20%;
+}
+
+.editor__text {
+    width: 60%;
+}
+
+.editor__text__area {
+    width: 100%;
+    height: 450px;
+    color: #000;
+}
+
+/* show */
+
+.show {
+    display: table;
+    width: 100%;
+    height: 100%;
+    cursor: none;
+}
+
+.show__title {
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--headline-color);
+    font-weight: normal;
+    font-size: 45px;
+    width: 70%;
+    opacity: 0.0;
+    -webkit-transition: all 1.5s ease-in-out;
+    font-style: underline;
+}
+
+.show__title--visible {
+    opacity: 1.0;
+}
+
+.show__container {
+    display: table-cell;
+    overflow: hidden;
+    vertical-align: middle;
+    width: 100%;
+    height: 100%;
+}
+
+.show__logo {
+    position: fixed;
+    right: 50px;
+    top: 40px;
+    width: 150px;
+}
+
+.show__teleprompter {
+    overflow: hidden;
+}
+
+.show__teleprompter__scroller {
+    -webkit-transform: translate3d(0, 0, 0);
+}
+
+.show__teleprompter__scroller--animated {
+    -webkit-transition: all 0.3s linear;
+}
+
+.show__teleprompter__lyrics, .show__title {
+    text-align: center;
+    text-shadow: 1px 2px 2px #111;
+    font-family: AvantGardeGothEF, sans-serif;
+    font-size: 70px;
+    font-weight: bold;
+    height: 140px;
+}
+
+.show__vertical {
+    width: 100%;
+    display: table;
+}
+
+.show__teleprompter__lyrics {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 20px;
+    opacity: 1.0;
+}
+
+.show__teleprompter__lyrics--previous {
+    opacity: 0.1;
+}
+
+.show__teleprompter__lyrics--next {
+    opacity: 0.6;
+}
