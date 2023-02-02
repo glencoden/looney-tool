@@ -18,6 +18,114 @@
 
     var _looneyTool = null;
 
+    var baseUrl = 'http://localhost:5555';
+
+    var oAuth2_access_token = '';
+    var tokenExpiryDate = null;
+
+    var _requests = {
+
+        get: function (url) {
+            const headers = {'Content-Type': 'application/json; charset=utf-8'};
+            if (oAuth2_access_token) {
+                headers.Authorization = `Bearer ${oAuth2_access_token}`;
+            }
+            return Promise.resolve()
+                .then(() => fetch(`${baseUrl}/${url}`, { method: 'GET', headers }))
+                .then(resp => resp.json())
+                .catch(err => console.error('Request Service: ', err));
+        },
+
+        post: function (url, data) {
+            const headers = {'Content-Type': 'application/json; charset=utf-8'};
+            if (oAuth2_access_token) {
+                headers.Authorization = `Bearer ${oAuth2_access_token}`;
+            }
+            return Promise.resolve()
+                .then(() => JSON.stringify(data))
+                .then(body => fetch(`${baseUrl}/${url}`, {
+                    method: 'POST',
+                    headers,
+                    body
+                }))
+                .then(resp => resp.json())
+                .catch(err => console.error('Request Service: ', err));
+        },
+
+        put: function (url, data) {
+            const headers = {'Content-Type': 'application/json; charset=utf-8'};
+            if (oAuth2_access_token) {
+                headers.Authorization = `Bearer ${oAuth2_access_token}`;
+            }
+            return Promise.resolve()
+                .then(() => JSON.stringify(data))
+                .then(body => fetch(`${baseUrl}/${url}`, {
+                    method: 'PUT',
+                    headers,
+                    body
+                }))
+                .then(resp => resp.json())
+                .catch(err => console.error('Request Service: ', err));
+        },
+
+        delete: function (url) {
+            const headers = {'Content-Type': 'application/json; charset=utf-8'};
+            if (oAuth2_access_token) {
+                headers.Authorization = `Bearer ${oAuth2_access_token}`;
+            }
+            return Promise.resolve()
+                .then(() => fetch(`${baseUrl}/${url}`, { method: 'DELETE', headers }))
+                .then(resp => resp.json())
+                .catch(err => console.error('Request Service: ', err));
+        },
+
+        _encodeURI: function (data) {
+            const formBody = [];
+            for (const key in data) {
+                const encodedKey = encodeURIComponent(key);
+                const encodedValue = encodeURIComponent(data[key]);
+                formBody.push(`${encodedKey}=${encodedValue}`);
+            }
+            return formBody.join('&');
+        },
+
+        _postEncodeURI: function (url, data) {
+            return Promise.resolve()
+                .then(() => this._encodeURI(data))
+                .then(body => fetch(`${baseUrl}/${url}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                    body
+                }))
+                .then(resp => {
+                    if (resp.ok) {
+                        return resp.json();
+                    }
+                    return Promise.reject(resp);
+                });
+        },
+
+        login: function (username, password) {
+            return this._postEncodeURI('auth/login', { username, password, grant_type: 'password', client_id: null, client_secret: null })
+                .then(resp => {
+                    // set token and expiry time
+                    oAuth2_access_token = resp.access_token;
+                    const expiryDate = new Date();
+                    expiryDate.setSeconds(expiryDate.getSeconds() + resp.expires_in - 60);
+                    tokenExpiryDate = expiryDate;
+
+                    return {
+                        success: true
+                    };
+                });
+        },
+
+        isAuthTokenValid: function () {
+            return new Date() < tokenExpiryDate;
+        },
+
+    };
+
     var _storage = {
 
         getAll: function (sNamespace) {
