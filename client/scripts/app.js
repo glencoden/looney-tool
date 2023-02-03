@@ -18,6 +18,117 @@
 
     var _looneyTool = null;
 
+    // var baseUrl = 'http://localhost:5555';
+    // var baseUrl = 'http://looneyapi.lan';
+    var baseUrl = 'https://staging.api.looneytunez.de';
+    // var baseUrl = 'https://api.looneytunez.de';
+
+    var oAuth2_access_token = '';
+    var tokenExpiryDate = null;
+
+    var _requests = {
+
+        get: function (url) {
+            const headers = {'Content-Type': 'application/json; charset=utf-8'};
+            if (oAuth2_access_token) {
+                headers.Authorization = `Bearer ${oAuth2_access_token}`;
+            }
+            return Promise.resolve()
+                .then(() => fetch(`${baseUrl}/${url}`, { method: 'GET', headers }))
+                .then(resp => resp.json())
+                .catch(err => console.error('Request Service: ', err));
+        },
+
+        post: function (url, data) {
+            const headers = {'Content-Type': 'application/json; charset=utf-8'};
+            if (oAuth2_access_token) {
+                headers.Authorization = `Bearer ${oAuth2_access_token}`;
+            }
+            return Promise.resolve()
+                .then(() => JSON.stringify(data))
+                .then(body => fetch(`${baseUrl}/${url}`, {
+                    method: 'POST',
+                    headers,
+                    body
+                }))
+                .then(resp => resp.json())
+                .catch(err => console.error('Request Service: ', err));
+        },
+
+        // put: function (url, data) {
+        //     const headers = {'Content-Type': 'application/json; charset=utf-8'};
+        //     if (oAuth2_access_token) {
+        //         headers.Authorization = `Bearer ${oAuth2_access_token}`;
+        //     }
+        //     return Promise.resolve()
+        //         .then(() => JSON.stringify(data))
+        //         .then(body => fetch(`${baseUrl}/${url}`, {
+        //             method: 'PUT',
+        //             headers,
+        //             body
+        //         }))
+        //         .then(resp => resp.json())
+        //         .catch(err => console.error('Request Service: ', err));
+        // },
+
+        // delete: function (url) {
+        //     const headers = {'Content-Type': 'application/json; charset=utf-8'};
+        //     if (oAuth2_access_token) {
+        //         headers.Authorization = `Bearer ${oAuth2_access_token}`;
+        //     }
+        //     return Promise.resolve()
+        //         .then(() => fetch(`${baseUrl}/${url}`, { method: 'DELETE', headers }))
+        //         .then(resp => resp.json())
+        //         .catch(err => console.error('Request Service: ', err));
+        // },
+
+        _encodeURI: function (data) {
+            const formBody = [];
+            for (const key in data) {
+                const encodedKey = encodeURIComponent(key);
+                const encodedValue = encodeURIComponent(data[key]);
+                formBody.push(`${encodedKey}=${encodedValue}`);
+            }
+            return formBody.join('&');
+        },
+
+        _postEncodeURI: function (url, data) {
+            return Promise.resolve()
+                .then(() => this._encodeURI(data))
+                .then(body => fetch(`${baseUrl}/${url}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                    body
+                }))
+                .then(resp => {
+                    if (resp.ok) {
+                        return resp.json();
+                    }
+                    return Promise.reject(resp);
+                });
+        },
+
+        login: function (username, password) {
+            return this._postEncodeURI('auth/login', { username, password, grant_type: 'password', client_id: null, client_secret: null })
+                .then(resp => {
+                    // set token and expiry time
+                    oAuth2_access_token = resp.access_token;
+                    const expiryDate = new Date();
+                    expiryDate.setSeconds(expiryDate.getSeconds() + resp.expires_in - 60);
+                    tokenExpiryDate = expiryDate;
+
+                    return {
+                        success: true
+                    };
+                });
+        },
+
+        // isAuthTokenValid: function () {
+        //     return new Date() < tokenExpiryDate;
+        // },
+
+    };
+
     var _storage = {
 
         getAll: function (sNamespace) {
@@ -83,7 +194,7 @@
 
     var app = {};
 
-    app.version = '1.0.3';
+    app.version = '1.1.0';
 
     // fullscreen
 
@@ -188,6 +299,49 @@
 
             reader.readAsText(file);
 
+        }
+
+    };
+
+    // cloud
+
+    app.cloud = {
+
+        save: function () {
+            const pw = prompt('Enter password');
+
+            _requests.login('boss', pw)
+                .then(() => {
+                    const data = _storage.makeFile();
+
+                    _requests.post('repertoire/backup', { data })
+                        .then(response => {
+                            if (!response?.success) {
+                                alert(
+                                    typeof response.error === 'string'
+                                        ? response.error
+                                        : 'A saving error occurred'
+                                );
+                                return;
+                            }
+                            alert('Everything is saved!');
+                        });
+                })
+                .catch(() => {
+                    alert('Wrong password');
+                });
+        },
+
+        load: function () {
+            return _requests.get('repertoire/backup')
+                .then(result => {
+                    if (!Array.isArray(result.data)) {
+                        console.error('unexpected data from looney API');
+                        return;
+                    }
+                    _storage.insertFile(result.data);
+                    app.editor.init();
+                });
         }
 
     };
@@ -758,6 +912,14 @@
 
     $(document).ready(function () {
 
+        // async load data from cloud
+
+        app.cloud.load()
+            .finally(() => {
+                app.editor.init();
+                app.showtime.init();
+            });
+
         // init
 
         var teleprompterElem = document.getElementById('teleprompter');
@@ -795,10 +957,6 @@
         });
 
         app.navigation.goTo('screen-settings');
-
-        app.editor.init();
-
-        app.showtime.init();
 
         // Hypenator configuration
 
@@ -863,6 +1021,12 @@
                 _looneyTool.nextSyllable();
             }
 
+        });
+
+        // before leave prompt
+
+        window.addEventListener('beforeunload', (event) => {
+            event.returnValue = `Are you sure you want to leave?`;
         });
 
         // version number
