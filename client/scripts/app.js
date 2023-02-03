@@ -191,7 +191,7 @@
 
     var app = {};
 
-    app.version = '1.0.3';
+    app.version = '1.1.0';
 
     // fullscreen
 
@@ -296,6 +296,26 @@
 
             reader.readAsText(file);
 
+        }
+
+    };
+
+    // cloud
+
+    app.cloud = {
+
+        save: function () {},
+
+        load: function () {
+            return _requests.get('repertoire/backup')
+                .then(result => {
+                    if (!Array.isArray(result.data)) {
+                        console.error('unexpected data from looney API');
+                        return;
+                    }
+                    _storage.insertFile(result.data);
+                    app.editor.init();
+                });
         }
 
     };
@@ -904,9 +924,11 @@
 
         app.navigation.goTo('screen-settings');
 
-        app.editor.init();
-
-        app.showtime.init();
+        app.cloud.load()
+            .finally(() => {
+                app.editor.init();
+                app.showtime.init();
+            });
 
         // Hypenator configuration
 
