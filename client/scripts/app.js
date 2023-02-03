@@ -52,32 +52,32 @@
                 .catch(err => console.error('Request Service: ', err));
         },
 
-        put: function (url, data) {
-            const headers = {'Content-Type': 'application/json; charset=utf-8'};
-            if (oAuth2_access_token) {
-                headers.Authorization = `Bearer ${oAuth2_access_token}`;
-            }
-            return Promise.resolve()
-                .then(() => JSON.stringify(data))
-                .then(body => fetch(`${baseUrl}/${url}`, {
-                    method: 'PUT',
-                    headers,
-                    body
-                }))
-                .then(resp => resp.json())
-                .catch(err => console.error('Request Service: ', err));
-        },
+        // put: function (url, data) {
+        //     const headers = {'Content-Type': 'application/json; charset=utf-8'};
+        //     if (oAuth2_access_token) {
+        //         headers.Authorization = `Bearer ${oAuth2_access_token}`;
+        //     }
+        //     return Promise.resolve()
+        //         .then(() => JSON.stringify(data))
+        //         .then(body => fetch(`${baseUrl}/${url}`, {
+        //             method: 'PUT',
+        //             headers,
+        //             body
+        //         }))
+        //         .then(resp => resp.json())
+        //         .catch(err => console.error('Request Service: ', err));
+        // },
 
-        delete: function (url) {
-            const headers = {'Content-Type': 'application/json; charset=utf-8'};
-            if (oAuth2_access_token) {
-                headers.Authorization = `Bearer ${oAuth2_access_token}`;
-            }
-            return Promise.resolve()
-                .then(() => fetch(`${baseUrl}/${url}`, { method: 'DELETE', headers }))
-                .then(resp => resp.json())
-                .catch(err => console.error('Request Service: ', err));
-        },
+        // delete: function (url) {
+        //     const headers = {'Content-Type': 'application/json; charset=utf-8'};
+        //     if (oAuth2_access_token) {
+        //         headers.Authorization = `Bearer ${oAuth2_access_token}`;
+        //     }
+        //     return Promise.resolve()
+        //         .then(() => fetch(`${baseUrl}/${url}`, { method: 'DELETE', headers }))
+        //         .then(resp => resp.json())
+        //         .catch(err => console.error('Request Service: ', err));
+        // },
 
         _encodeURI: function (data) {
             const formBody = [];
@@ -120,9 +120,9 @@
                 });
         },
 
-        isAuthTokenValid: function () {
-            return new Date() < tokenExpiryDate;
-        },
+        // isAuthTokenValid: function () {
+        //     return new Date() < tokenExpiryDate;
+        // },
 
     };
 
@@ -304,7 +304,30 @@
 
     app.cloud = {
 
-        save: function () {},
+        save: function () {
+            const pw = prompt('Enter password');
+
+            _requests.login('boss', pw)
+                .then(() => {
+                    const data = _storage.makeFile();
+
+                    _requests.post('repertoire/backup', { data })
+                        .then(response => {
+                            if (!response?.success) {
+                                alert(
+                                    typeof response.error === 'string'
+                                        ? response.error
+                                        : 'A saving error occurred'
+                                );
+                                return;
+                            }
+                            alert('Everything is saved!');
+                        });
+                })
+                .catch(() => {
+                    alert('Wrong password');
+                });
+        },
 
         load: function () {
             return _requests.get('repertoire/backup')
