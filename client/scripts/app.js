@@ -909,6 +909,14 @@
 
     $(document).ready(function () {
 
+        // async load data from cloud
+
+        app.cloud.load()
+            .finally(() => {
+                app.editor.init();
+                app.showtime.init();
+            });
+
         // init
 
         var teleprompterElem = document.getElementById('teleprompter');
@@ -946,12 +954,6 @@
         });
 
         app.navigation.goTo('screen-settings');
-
-        app.cloud.load()
-            .finally(() => {
-                app.editor.init();
-                app.showtime.init();
-            });
 
         // Hypenator configuration
 
@@ -1016,6 +1018,12 @@
                 _looneyTool.nextSyllable();
             }
 
+        });
+
+        // before leave prompt
+
+        window.addEventListener('beforeunload', (event) => {
+            event.returnValue = `Are you sure you want to leave?`;
         });
 
         // version number
