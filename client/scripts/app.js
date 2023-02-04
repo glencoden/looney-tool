@@ -308,7 +308,7 @@
     app.cloud = {
 
         save: function () {
-            const pw = prompt('Enter password');
+            const pw = prompt('Passwort benötigt');
 
             _requests.login('boss', pw)
                 .then(() => {
@@ -324,11 +324,11 @@
                                 );
                                 return;
                             }
-                            alert('Everything is saved!');
+                            alert('Gespeichert!');
                         });
                 })
                 .catch(() => {
-                    alert('Wrong password');
+                    alert('Falsches Passwort');
                 });
         },
 
