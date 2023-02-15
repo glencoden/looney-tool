@@ -918,6 +918,12 @@
             .finally(() => {
                 app.editor.init();
                 app.showtime.init();
+
+                var socket = io('localhost:5555');
+
+                socket.on('next', () => {
+                    _looneyTool.nextSyllable();
+                });
             });
 
         // init
