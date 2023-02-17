@@ -919,7 +919,7 @@
                 app.editor.init();
                 app.showtime.init();
 
-                var socket = io('localhost:5555');
+                var socket = io(baseUrl);
 
                 socket.on('next', () => {
                     _looneyTool.nextSyllable();
