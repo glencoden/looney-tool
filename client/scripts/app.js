@@ -196,7 +196,7 @@
 
     var app = {};
 
-    app.version = '1.1.0';
+    app.version = '1.2.0';
 
     // fullscreen
 
