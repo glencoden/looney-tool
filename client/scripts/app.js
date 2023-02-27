@@ -329,6 +329,10 @@
                                 );
                                 return;
                             }
+
+                            return app.cloud.load();
+                        })
+                        .then(() => {
                             alert('Gespeichert!');
                         });
                 })
