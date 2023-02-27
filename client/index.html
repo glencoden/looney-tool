@@ -41,6 +41,9 @@
             <button onclick="app.cloud.load()">Reload</button>
             <button onclick="app.cloud.save()">Save</button>
 
+            <h4>Published Setlist</h4>
+            <select id="publishedSetlist" onchange="app.cloud.setPublishedSetlist()"></select>
+
             <hr>
 
             <h3>Backup-File</h3>
@@ -160,6 +163,8 @@
                 <p class="show__title" id="show-title"></p>
 
                 <img class="show__logo" src="images/logo-white.png" />
+
+                <p class="show__auto-tool" id="show-auto-tool">auto</p>
 
                 <div class="show__container">
 
