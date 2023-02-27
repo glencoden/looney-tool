@@ -196,7 +196,7 @@
 
     var app = {};
 
-    app.version = '1.2.0';
+    app.version = '1.2.1';
 
     // fullscreen
 
@@ -329,6 +329,10 @@
                                 );
                                 return;
                             }
+
+                            return app.cloud.load();
+                        })
+                        .then(() => {
                             alert('Gespeichert!');
                         });
                 })
