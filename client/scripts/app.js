@@ -310,6 +310,7 @@
     app.cloud = {
 
         currentlyPublishedSetlistId: null,
+        autoToolEnabled: false,
 
         save: function () {
             const pw = prompt('Passwort benötigt');
@@ -409,6 +410,33 @@
                 .catch(() => {
                     alert('Falsches Passwort');
                 });
+        },
+
+        autoToolConnect: function () {
+            if (typeof io === 'undefined') {
+                console.warn('socket io not found');
+                return;
+            }
+            app.cloud.autoToolEnabled = true;
+
+            var socket = io(baseUrl);
+
+            socket.on('next', () => {
+                if (!app.cloud.autoToolEnabled) {
+                    return;
+                }
+                _looneyTool.nextSyllable();
+            });
+        },
+
+        toggleAutoTool: function () {
+            app.cloud.autoToolEnabled = !app.cloud.autoToolEnabled;
+
+            var indicatorLabel = app.cloud.autoToolEnabled
+                ? 'auto'
+                : 'manual';
+
+            $('#show-auto-tool').html(indicatorLabel);
         }
 
     };
@@ -979,18 +1007,13 @@
 
     $(document).ready(function () {
 
-        // async load data from cloud
+        // load data from looney API
 
         app.cloud.load()
             .finally(() => {
                 app.editor.init();
                 app.showtime.init();
-
-                var socket = io(baseUrl);
-
-                socket.on('next', () => {
-                    _looneyTool.nextSyllable();
-                });
+                app.cloud.autoToolConnect();
             });
 
         // init
@@ -1071,6 +1094,8 @@
                         _looneyTool.previousSong();
                     } else if (event.keyCode === 34) {
                         _looneyTool.nextSong();
+                    } else if (event.keyCode === 190) {
+                        app.cloud.toggleAutoTool();
                     } else {
 
                         // song search mode
