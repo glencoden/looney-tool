@@ -184,8 +184,16 @@ input[disabled], textarea[disabled], select[disabled], button[disabled] {
 .show__logo {
     position: fixed;
     right: 50px;
-    top: 40px;
+    top: 56px;
     width: 150px;
+}
+
+.show__auto-tool {
+    position: fixed;
+    left: 50px;
+    bottom: 50px;
+    color: #fff;
+    opacity: 0.3;
 }
 
 .show__teleprompter {

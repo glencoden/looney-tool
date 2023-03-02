@@ -13,6 +13,7 @@
     <script type="text/javascript" src="vendor/hypenator-patterns/en-us.js"></script>
     <script type="text/javascript" src="scripts/looney.js"></script>
     <script type="text/javascript" src="scripts/app.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
 
@@ -35,8 +36,18 @@
 
             <hr>
 
+            <h3>Looney Cloud</h3>
+
+            <button onclick="app.cloud.load()">Reload</button>
+            <button onclick="app.cloud.save()">Save</button>
+
+            <h4>Published Setlist</h4>
+            <select id="publishedSetlist" onchange="app.cloud.setPublishedSetlist()"></select>
+
+            <hr>
+
             <h3>Backup-File</h3>
-            <button onclick="app.file.save()">Save</button>
+            <button onclick="app.file.save()">Download</button>
 
             <h4>Load archived Backup-File</h4>
             <input style="width: 300px;" onchange="app.file.load()" id="fileLoader" type="file" name="files"></input>
@@ -152,6 +163,8 @@
                 <p class="show__title" id="show-title"></p>
 
                 <img class="show__logo" src="images/logo-white.png" />
+
+                <p class="show__auto-tool" id="show-auto-tool">auto</p>
 
                 <div class="show__container">
 

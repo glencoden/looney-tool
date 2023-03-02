@@ -1,0 +1,27 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-to-wolke-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check out repository
+        uses: actions/checkout@v2
+      - name: copy ssh key
+        run: |
+          mkdir -p ~/.ssh
+          echo -e "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+      - name: clear server directory
+        run: |
+          ssh root@${{ secrets.SERVER_ADDRESS_PROD }} <<"ENDSSH"
+          mkdir -p /root/apps/looney-tool/client
+          rm -rf /root/apps/looney-tool/client/*
+          ENDSSH
+      - name: deploy build
+        run: |
+          cd client/
+          scp -r * root@${{ secrets.SERVER_ADDRESS_PROD }}:/root/apps/looney-tool/client

@@ -18,6 +18,119 @@
 
     var _looneyTool = null;
 
+    // var baseUrl = 'http://localhost:5555';
+    // var baseUrl = 'http://looneyapi.lan';
+    var baseUrl = 'https://staging.api.looneytunez.de';
+    // var baseUrl = 'https://api.looneytunez.de';
+
+    var userName = 'boss';
+
+    var oAuth2_access_token = '';
+    var tokenExpiryDate = null;
+
+    var _requests = {
+
+        get: function (url) {
+            const headers = {'Content-Type': 'application/json; charset=utf-8'};
+            if (oAuth2_access_token) {
+                headers.Authorization = `Bearer ${oAuth2_access_token}`;
+            }
+            return Promise.resolve()
+                .then(() => fetch(`${baseUrl}/${url}`, { method: 'GET', headers }))
+                .then(resp => resp.json())
+                .catch(err => console.error('Request Service: ', err));
+        },
+
+        post: function (url, data) {
+            const headers = {'Content-Type': 'application/json; charset=utf-8'};
+            if (oAuth2_access_token) {
+                headers.Authorization = `Bearer ${oAuth2_access_token}`;
+            }
+            return Promise.resolve()
+                .then(() => JSON.stringify(data))
+                .then(body => fetch(`${baseUrl}/${url}`, {
+                    method: 'POST',
+                    headers,
+                    body
+                }))
+                .then(resp => resp.json())
+                .catch(err => console.error('Request Service: ', err));
+        },
+
+        put: function (url, data) {
+            const headers = {'Content-Type': 'application/json; charset=utf-8'};
+            if (oAuth2_access_token) {
+                headers.Authorization = `Bearer ${oAuth2_access_token}`;
+            }
+            return Promise.resolve()
+                .then(() => JSON.stringify(data))
+                .then(body => fetch(`${baseUrl}/${url}`, {
+                    method: 'PUT',
+                    headers,
+                    body
+                }))
+                .then(resp => resp.json())
+                .catch(err => console.error('Request Service: ', err));
+        },
+
+        // delete: function (url) {
+        //     const headers = {'Content-Type': 'application/json; charset=utf-8'};
+        //     if (oAuth2_access_token) {
+        //         headers.Authorization = `Bearer ${oAuth2_access_token}`;
+        //     }
+        //     return Promise.resolve()
+        //         .then(() => fetch(`${baseUrl}/${url}`, { method: 'DELETE', headers }))
+        //         .then(resp => resp.json())
+        //         .catch(err => console.error('Request Service: ', err));
+        // },
+
+        _encodeURI: function (data) {
+            const formBody = [];
+            for (const key in data) {
+                const encodedKey = encodeURIComponent(key);
+                const encodedValue = encodeURIComponent(data[key]);
+                formBody.push(`${encodedKey}=${encodedValue}`);
+            }
+            return formBody.join('&');
+        },
+
+        _postEncodeURI: function (url, data) {
+            return Promise.resolve()
+                .then(() => this._encodeURI(data))
+                .then(body => fetch(`${baseUrl}/${url}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                    body
+                }))
+                .then(resp => {
+                    if (resp.ok) {
+                        return resp.json();
+                    }
+                    return Promise.reject(resp);
+                });
+        },
+
+        login: function (username, password) {
+            return this._postEncodeURI('auth/login', { username, password, grant_type: 'password', client_id: null, client_secret: null })
+                .then(resp => {
+                    // set token and expiry time
+                    oAuth2_access_token = resp.access_token;
+                    const expiryDate = new Date();
+                    expiryDate.setSeconds(expiryDate.getSeconds() + resp.expires_in - 60);
+                    tokenExpiryDate = expiryDate;
+
+                    return {
+                        success: true
+                    };
+                });
+        },
+
+        // isAuthTokenValid: function () {
+        //     return new Date() < tokenExpiryDate;
+        // },
+
+    };
+
     var _storage = {
 
         getAll: function (sNamespace) {
@@ -83,7 +196,7 @@
 
     var app = {};
 
-    app.version = '1.0.3';
+    app.version = '1.2.1';
 
     // fullscreen
 
@@ -188,6 +301,146 @@
 
             reader.readAsText(file);
 
+        }
+
+    };
+
+    // cloud
+
+    app.cloud = {
+
+        currentlyPublishedSetlistId: null,
+        autoToolEnabled: false,
+
+        save: function () {
+            const pw = prompt('Passwort benötigt');
+
+            _requests.login(userName, pw)
+                .then(() => {
+                    const data = _storage.makeFile();
+
+                    _requests.post('repertoire/backup', { data })
+                        .then(response => {
+                            if (!response?.success) {
+                                alert(
+                                    typeof response.error === 'string'
+                                        ? response.error
+                                        : 'A saving error occurred'
+                                );
+                                return;
+                            }
+
+                            return app.cloud.load();
+                        })
+                        .then(() => {
+                            alert('Gespeichert!');
+                        });
+                })
+                .catch(() => {
+                    alert('Falsches Passwort');
+                });
+        },
+
+        load: function () {
+            return Promise.resolve()
+                // get currently published setlist
+                .then(() => _requests.get('repertoire/published'))
+                .then(result => {
+                    if (result.data === null) {
+                        return;
+                    }
+                    app.cloud.currentlyPublishedSetlistId = result.data.id;
+                })
+                // load options for published setlist selection
+                .then(() => _requests.get('repertoire/setlist'))
+                .then(result => {
+                    if (!Array.isArray(result.data)) {
+                        console.error('unexpected setlist data from looney API');
+                        return;
+                    }
+                    $('#publishedSetlist').html('');
+
+                    var elem;
+                    var idx = 0;
+
+                    result.data.forEach(function (eSetlist) {
+                        idx++;
+                        elem = $('<option />');
+                        $(elem).attr('value', eSetlist.id);
+                        $(elem).html(idx + '. ' + eSetlist.title);
+                        $('#publishedSetlist').append(elem);
+                    });
+
+                    $('#publishedSetlist').val(app.cloud.currentlyPublishedSetlistId);
+                })
+                // load setlists and songs as backup bundle
+                .then(() => _requests.get('repertoire/backup'))
+                .then(result => {
+                    if (!Array.isArray(result.data)) {
+                        console.error('unexpected backup data from looney API');
+                        return;
+                    }
+                    _storage.insertFile(result.data);
+                    app.editor.init();
+                });
+        },
+
+        setPublishedSetlist: function () {
+            var publishedSetlistId = $('#publishedSetlist').val();
+
+            if (!publishedSetlistId) {
+                $('#publishedSetlist').val(app.cloud.currentlyPublishedSetlistId);
+                return false;
+            }
+            app.cloud.currentlyPublishedSetlistId = publishedSetlistId;
+
+            const pw = prompt('Passwort benötigt');
+
+            _requests.login(userName, pw)
+                .then(() => {
+                    _requests.put('repertoire/published', { id: publishedSetlistId })
+                        .then(response => {
+                            if (!response?.success) {
+                                alert(
+                                    typeof response.error === 'string'
+                                        ? response.error
+                                        : 'A error occurred publishing the setlist'
+                                );
+                                return;
+                            }
+                            alert('Veröffentlicht!');
+                        });
+                })
+                .catch(() => {
+                    alert('Falsches Passwort');
+                });
+        },
+
+        autoToolConnect: function () {
+            if (typeof io === 'undefined') {
+                console.warn('socket io not found');
+                return;
+            }
+            app.cloud.autoToolEnabled = true;
+
+            var socket = io(baseUrl);
+
+            socket.on('next', () => {
+                if (!app.cloud.autoToolEnabled) {
+                    return;
+                }
+                _looneyTool.nextSyllable();
+            });
+        },
+
+        toggleAutoTool: function () {
+            app.cloud.autoToolEnabled = !app.cloud.autoToolEnabled;
+
+            var indicatorLabel = app.cloud.autoToolEnabled
+                ? 'auto'
+                : 'manual';
+
+            $('#show-auto-tool').html(indicatorLabel);
         }
 
     };
@@ -758,6 +1011,15 @@
 
     $(document).ready(function () {
 
+        // load data from looney API
+
+        app.cloud.load()
+            .finally(() => {
+                app.editor.init();
+                app.showtime.init();
+                app.cloud.autoToolConnect();
+            });
+
         // init
 
         var teleprompterElem = document.getElementById('teleprompter');
@@ -795,10 +1057,6 @@
         });
 
         app.navigation.goTo('screen-settings');
-
-        app.editor.init();
-
-        app.showtime.init();
 
         // Hypenator configuration
 
@@ -840,6 +1098,8 @@
                         _looneyTool.previousSong();
                     } else if (event.keyCode === 34) {
                         _looneyTool.nextSong();
+                    } else if (event.keyCode === 190) {
+                        app.cloud.toggleAutoTool();
                     } else {
 
                         // song search mode
@@ -863,6 +1123,12 @@
                 _looneyTool.nextSyllable();
             }
 
+        });
+
+        // before leave prompt
+
+        window.addEventListener('beforeunload', (event) => {
+            event.returnValue = `Are you sure you want to leave?`;
         });
 
         // version number
