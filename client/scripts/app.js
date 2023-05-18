@@ -23,6 +23,8 @@
     // var baseUrl = 'https://staging.api.looneytunez.de';
     var baseUrl = 'https://api.looneytunez.de';
 
+    var autoToolServerUrl = 'http://localhost:5555'
+
     var userName = 'boss';
 
     var oAuth2_access_token = '';
@@ -423,7 +425,7 @@
             }
             app.cloud.autoToolEnabled = true;
 
-            var socket = io(baseUrl);
+            var socket = io(autoToolServerUrl);
 
             socket.on('next', () => {
                 if (!app.cloud.autoToolEnabled) {
