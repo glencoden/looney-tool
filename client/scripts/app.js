@@ -431,7 +431,8 @@
 
             app.cloud.autoToolEnabled = true;
 
-            var socketUrl = $('#autoToolUrl').val() || autoToolServerUrl;
+            var inputValue = $('#autoToolUrl').val();
+            var socketUrl = inputValue ? (inputValue  + ':5555') : autoToolServerUrl;
 
             app.cloud.socketInstance = io(socketUrl);
 
