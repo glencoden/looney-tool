@@ -23,6 +23,8 @@
     // var baseUrl = 'https://staging.api.looneytunez.de';
     var baseUrl = 'https://api.looneytunez.de';
 
+    var autoToolServerUrl = 'http://localhost:5555'
+
     var userName = 'boss';
 
     var oAuth2_access_token = '';
@@ -196,7 +198,7 @@
 
     var app = {};
 
-    app.version = '1.2.1';
+    app.version = '1.3.0';
 
     // fullscreen
 
@@ -310,6 +312,7 @@
     app.cloud = {
 
         currentlyPublishedSetlistId: null,
+        socketInstance: null,
         autoToolEnabled: false,
 
         save: function () {
@@ -421,11 +424,33 @@
                 console.warn('socket io not found');
                 return;
             }
+
+            if (app.cloud.socketInstance !== null) {
+                app.cloud.socketInstance.close();
+            }
+
             app.cloud.autoToolEnabled = true;
 
-            var socket = io(baseUrl);
+            var inputValue = $('#autoToolUrl').val();
+            var socketUrl = inputValue ? ('http://' + inputValue  + ':5555') : autoToolServerUrl;
 
-            socket.on('next', () => {
+            app.cloud.socketInstance = io(socketUrl);
+
+            app.cloud.socketInstance.on('connect_error', () => {
+                alert('Das hat nicht geklappt!');
+                app.cloud.socketInstance.close();
+                app.cloud.socketInstance = null;
+            });
+
+            app.cloud.socketInstance.on('connect', () => {
+                alert('Verbunden!');
+            });
+
+            app.cloud.socketInstance.on('disconnect', () => {
+                console.log('web socket disconnected');
+            });
+
+            app.cloud.socketInstance.on('next', () => {
                 if (!app.cloud.autoToolEnabled) {
                     return;
                 }
@@ -1017,7 +1042,7 @@
             .finally(() => {
                 app.editor.init();
                 app.showtime.init();
-                app.cloud.autoToolConnect();
+                // app.cloud.autoToolConnect();
             });
 
         // init

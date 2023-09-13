@@ -46,13 +46,20 @@
 
             <hr>
 
-            <h3>Backup-File</h3>
-            <button onclick="app.file.save()">Download</button>
+            <h3>Auto tool</h3>
 
-            <h4>Load archived Backup-File</h4>
-            <input style="width: 300px;" onchange="app.file.load()" id="fileLoader" type="file" name="files"></input>
+            <input id="autoToolUrl" name="auto_tool" type="text" style="width: 300px;" placeholder="IP Address"></input>
+            <button onclick="app.cloud.autoToolConnect()">Connect</button>
 
             <hr>
+
+<!--            <h3>Backup-File</h3>-->
+<!--            <button onclick="app.file.save()">Download</button>-->
+
+<!--            <h4>Load archived Backup-File</h4>-->
+<!--            <input style="width: 300px;" onchange="app.file.load()" id="fileLoader" type="file" name="files"></input>-->
+
+<!--            <hr>-->
 
             <p id="version"></p>
 
