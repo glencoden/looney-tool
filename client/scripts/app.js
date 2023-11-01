@@ -23,8 +23,6 @@
     // var baseUrl = 'https://staging.api.looneytunez.de';
     var baseUrl = 'https://api.looneytunez.de';
 
-    var autoToolServerUrl = 'http://localhost:5555'
-
     var userName = 'boss';
 
     var oAuth2_access_token = '';
@@ -198,7 +196,7 @@
 
     var app = {};
 
-    app.version = '1.3.0';
+    app.version = '1.4.0';
 
     // fullscreen
 
@@ -314,6 +312,7 @@
         currentlyPublishedSetlistId: null,
         socketInstance: null,
         autoToolEnabled: false,
+        pollSocketConnectionTimeoutId: null,
 
         save: function () {
             const pw = prompt('Passwort benötigt');
@@ -421,41 +420,58 @@
 
         autoToolConnect: function () {
             if (typeof io === 'undefined') {
-                console.warn('socket io not found');
+                console.warn('socket.io lib not found');
                 return;
             }
 
             if (app.cloud.socketInstance !== null) {
-                app.cloud.socketInstance.close();
+                return;
             }
 
-            app.cloud.autoToolEnabled = true;
+            clearTimeout(app.cloud.pollSocketConnectionTimeoutId);
 
-            var inputValue = $('#autoToolUrl').val();
-            var socketUrl = inputValue ? ('http://' + inputValue  + ':5555') : autoToolServerUrl;
+            _requests.get('live/auto_tool_server_ip')
+                .then(result => {
+                    if (result?.data === null) {
+                        app.cloud.pollSocketConnectionTimeoutId = setTimeout(() => {
+                            app.cloud.autoToolConnect();
+                        }, 1000 * 5);
+                        return;
+                    }
 
-            app.cloud.socketInstance = io(socketUrl);
+                    var socketUrl = `${result.data}:5544`;
 
-            app.cloud.socketInstance.on('connect_error', () => {
-                alert('Das hat nicht geklappt!');
-                app.cloud.socketInstance.close();
-                app.cloud.socketInstance = null;
-            });
+                    app.cloud.socketInstance = io(socketUrl);
 
-            app.cloud.socketInstance.on('connect', () => {
-                alert('Verbunden!');
-            });
+                    app.cloud.socketInstance.on('connect_error', (error) => {
+                        console.log(error);
+                    });
 
-            app.cloud.socketInstance.on('disconnect', () => {
-                console.log('web socket disconnected');
-            });
+                    app.cloud.socketInstance.on('connect', () => {
+                        app.cloud.autoToolEnabled = true;
 
-            app.cloud.socketInstance.on('next', () => {
-                if (!app.cloud.autoToolEnabled) {
-                    return;
-                }
-                _looneyTool.nextSyllable();
-            });
+                        $('#autoToolStatus').html('Auto tool connected');
+                    });
+
+                    app.cloud.socketInstance.on('disconnect', () => {
+                        $('#autoToolStatus').html('Auto tool not connected');
+
+                        app.cloud.autoToolConnect();
+                    });
+
+                    app.cloud.socketInstance.on('ping', (pingTime) => {
+                        const latency = Date.now() - pingTime;
+
+                        app.cloud.socketInstance.emit('latency', latency);
+                    });
+
+                    app.cloud.socketInstance.on('next', () => {
+                        if (!app.cloud.autoToolEnabled) {
+                            return;
+                        }
+                        _looneyTool.nextSyllable();
+                    });
+                });
         },
 
         toggleAutoTool: function () {
@@ -1042,7 +1058,7 @@
             .finally(() => {
                 app.editor.init();
                 app.showtime.init();
-                // app.cloud.autoToolConnect();
+                app.cloud.autoToolConnect();
             });
 
         // init
