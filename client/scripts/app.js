@@ -439,7 +439,7 @@
                         return;
                     }
 
-                    var socketUrl = `${result.data}:5555`;
+                    var socketUrl = `http://${result.data}:5555`;
 
                     app.cloud.socketInstance = io(socketUrl);
 
