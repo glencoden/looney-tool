@@ -459,10 +459,13 @@
                         app.cloud.autoToolConnect();
                     });
 
-                    app.cloud.socketInstance.on('ping', (pingTime) => {
-                        const latency = Date.now() - pingTime;
+                    app.cloud.socketInstance.on('ping', ({ pingAt, requestNetworkLatencyId }) => {
+                        const latency = Date.now() - pingAt;
 
-                        app.cloud.socketInstance.emit('latency', latency);
+                        app.cloud.socketInstance.emit('latency', {
+                            value: latency,
+                            requestId: requestNetworkLatencyId,
+                        });
                     });
 
                     app.cloud.socketInstance.on('next', () => {
