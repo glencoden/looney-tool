@@ -419,60 +419,86 @@
         },
 
         autoToolConnect: function () {
-            if (typeof io === 'undefined') {
-                console.warn('socket.io lib not found');
-                return;
-            }
-
             if (app.cloud.socketInstance !== null) {
                 return;
             }
 
-            clearTimeout(app.cloud.pollSocketConnectionTimeoutId);
+            const retryInterval = 1000 * 5;
 
             _requests.get('live/auto_tool_server_ip')
                 .then(result => {
                     if (result?.data === null) {
+                        clearTimeout(app.cloud.pollSocketConnectionTimeoutId);
+
                         app.cloud.pollSocketConnectionTimeoutId = setTimeout(() => {
                             app.cloud.autoToolConnect();
-                        }, 1000 * 5);
+                        }, retryInterval);
                         return;
                     }
 
-                    var socketUrl = `http://${result.data}:5555`;
+                    const socketUrl = `ws://${result.data}:5555`;
 
-                    app.cloud.socketInstance = io(socketUrl);
+                    app.cloud.socketInstance = new WebSocket(socketUrl);
 
-                    app.cloud.socketInstance.on('connect_error', (error) => {
-                        console.log(error);
+                    app.cloud.socketInstance.addEventListener('error', (error) => {
+                        console.log(`Error on websocket connect: ${JSON.stringify(error)}. Retry in ${retryInterval / 1000} s.`);
+
+                        clearTimeout(app.cloud.pollSocketConnectionTimeoutId);
+
+                        app.cloud.pollSocketConnectionTimeoutId = setTimeout(() => {
+                            app.cloud.socketInstance = null;
+
+                            app.cloud.autoToolConnect();
+                        }, retryInterval);
                     });
 
-                    app.cloud.socketInstance.on('connect', () => {
+                    app.cloud.socketInstance.addEventListener('open', () => {
                         app.cloud.autoToolEnabled = true;
 
                         $('#autoToolStatus').html('Auto tool connected');
                     });
 
-                    app.cloud.socketInstance.on('disconnect', () => {
+                    app.cloud.socketInstance.addEventListener('close', () => {
                         $('#autoToolStatus').html('Auto tool not connected');
 
                         app.cloud.autoToolConnect();
                     });
 
-                    app.cloud.socketInstance.on('ping', ({ pingAt, requestNetworkLatencyId }) => {
-                        const latency = Date.now() - pingAt;
+                    app.cloud.socketInstance.addEventListener('message', (event) => {
+                        const pingTimestamp = parseInt(event.data);
 
-                        app.cloud.socketInstance.emit('latency', {
-                            value: latency,
-                            requestId: requestNetworkLatencyId,
-                        });
-                    });
-
-                    app.cloud.socketInstance.on('next', () => {
-                        if (!app.cloud.autoToolEnabled) {
+                        if (!Number.isNaN(pingTimestamp)) {
+                            app.cloud.socketInstance.send(pingTimestamp);
                             return;
                         }
-                        _looneyTool.nextSyllable();
+
+                        let data = null;
+
+                        try {
+                            data = JSON.parse(event.data);
+                        } catch (err) {
+                            console.error(err);
+                        }
+
+                        if (data === null) {
+                            return;
+                        }
+
+                        const { name, payload } = data;
+
+                        switch (name) {
+                            case 'next-syllable': {
+                                if (!app.cloud.autoToolEnabled) {
+                                    break;
+                                }
+
+                                _looneyTool.nextSyllable();
+
+                                break;
+                            }
+                            default:
+                                console.log(`unknown socket event name: ${name}`);
+                        }
                     });
                 });
         },
