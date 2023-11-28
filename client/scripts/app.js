@@ -465,29 +465,16 @@
                     });
 
                     app.cloud.socketInstance.addEventListener('message', (event) => {
-                        const pingTimestamp = parseInt(event.data);
+                        const messageCode = parseInt(event.data);
 
-                        if (!Number.isNaN(pingTimestamp)) {
-                            app.cloud.socketInstance.send(pingTimestamp);
+                        if (Number.isNaN(messageCode)) {
+                            console.warn('websocket on message listener expects a number');
                             return;
                         }
 
-                        let data = null;
-
-                        try {
-                            data = JSON.parse(event.data);
-                        } catch (err) {
-                            console.error(err);
-                        }
-
-                        if (data === null) {
-                            return;
-                        }
-
-                        const { name, payload } = data;
-
-                        switch (name) {
-                            case 'next-syllable': {
+                        switch (messageCode) {
+                            // next syllable
+                            case 0: {
                                 if (!app.cloud.autoToolEnabled) {
                                     break;
                                 }
@@ -496,8 +483,9 @@
 
                                 break;
                             }
+                            // send back the received number (presumed timestamp) to test network latency
                             default:
-                                console.log(`unknown socket event name: ${name}`);
+                                app.cloud.socketInstance.send(messageCode);
                         }
                     });
                 });
