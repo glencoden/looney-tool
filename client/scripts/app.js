@@ -425,69 +425,82 @@
 
             const retryInterval = 1000 * 5;
 
-            _requests.get('live/auto_tool_server_ip')
-                .then(result => {
-                    if (result?.data === null) {
-                        clearTimeout(app.cloud.pollSocketConnectionTimeoutId);
+            let isLocallyAvailable = false;
 
-                        app.cloud.pollSocketConnectionTimeoutId = setTimeout(() => {
-                            app.cloud.autoToolConnect();
-                        }, retryInterval);
-                        return;
-                    }
+            fetch('http://localhost:5555')
+                .then(() => {
+                    isLocallyAvailable = true;
+                })
+                .catch((err) => {
+                    let isLocallyAvailable = false;
+                })
+                .finally(() => {
+                    _requests.get('live/auto_tool_server_ip')
+                        .then(result => {
+                            if (result?.data === null) {
+                                clearTimeout(app.cloud.pollSocketConnectionTimeoutId);
 
-                    const socketUrl = `ws://${result.data}:5555`;
+                                app.cloud.pollSocketConnectionTimeoutId = setTimeout(() => {
+                                    app.cloud.autoToolConnect();
+                                }, retryInterval);
+                                return;
+                            }
 
-                    app.cloud.socketInstance = new WebSocket(socketUrl);
+                            const socketUrl = isLocallyAvailable
+                                ? 'ws://localhost:5555'
+                                : `ws://${result.data}:5555`;
 
-                    app.cloud.socketInstance.addEventListener('error', (error) => {
-                        console.log(`Error on websocket connect: ${JSON.stringify(error)}. Retry in ${retryInterval / 1000} s.`);
+                            app.cloud.socketInstance = new WebSocket(socketUrl);
 
-                        clearTimeout(app.cloud.pollSocketConnectionTimeoutId);
+                            app.cloud.socketInstance.addEventListener('error', (error) => {
+                                console.log(`Error on websocket connect: ${JSON.stringify(error)}. Retry in ${retryInterval / 1000} s.`);
 
-                        app.cloud.pollSocketConnectionTimeoutId = setTimeout(() => {
-                            app.cloud.socketInstance = null;
+                                clearTimeout(app.cloud.pollSocketConnectionTimeoutId);
 
-                            app.cloud.autoToolConnect();
-                        }, retryInterval);
-                    });
+                                app.cloud.pollSocketConnectionTimeoutId = setTimeout(() => {
+                                    app.cloud.socketInstance = null;
 
-                    app.cloud.socketInstance.addEventListener('open', () => {
-                        app.cloud.autoToolEnabled = true;
+                                    app.cloud.autoToolConnect();
+                                }, retryInterval);
+                            });
 
-                        $('#autoToolStatus').html('Auto tool connected');
-                    });
+                            app.cloud.socketInstance.addEventListener('open', () => {
+                                app.cloud.autoToolEnabled = true;
 
-                    app.cloud.socketInstance.addEventListener('close', () => {
-                        $('#autoToolStatus').html('Auto tool not connected');
+                                $('#autoToolStatus').html('Auto tool connected');
+                            });
 
-                        app.cloud.autoToolConnect();
-                    });
+                            app.cloud.socketInstance.addEventListener('close', () => {
+                                $('#autoToolStatus').html('Auto tool not connected');
 
-                    app.cloud.socketInstance.addEventListener('message', (event) => {
-                        const messageCode = parseInt(event.data);
+                                app.cloud.autoToolConnect();
+                            });
 
-                        if (Number.isNaN(messageCode)) {
-                            console.warn('websocket on message listener expects a number');
-                            return;
-                        }
+                            app.cloud.socketInstance.addEventListener('message', (event) => {
+                                const messageCode = parseInt(event.data);
 
-                        switch (messageCode) {
-                            // next syllable
-                            case 0: {
-                                if (!app.cloud.autoToolEnabled) {
-                                    break;
+                                if (Number.isNaN(messageCode)) {
+                                    console.warn('websocket on message listener expects a number');
+                                    return;
                                 }
 
-                                _looneyTool.nextSyllable();
+                                switch (messageCode) {
+                                    // next syllable
+                                    case 0: {
+                                        if (!app.cloud.autoToolEnabled) {
+                                            break;
+                                        }
 
-                                break;
-                            }
-                            // send back the received number (presumed timestamp) to test network latency
-                            default:
-                                app.cloud.socketInstance.send(messageCode);
-                        }
-                    });
+                                        _looneyTool.nextSyllable();
+
+                                        break;
+                                    }
+                                    // send back the received number (presumed timestamp) to test network latency
+                                    default:
+                                        app.cloud.socketInstance.send(messageCode);
+                                }
+                            });
+                        });
                 });
         },
 
