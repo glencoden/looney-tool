@@ -20,8 +20,8 @@
 
     // var baseUrl = 'http://localhost:5555';
     // var baseUrl = 'http://looneyapi.lan';
-    var baseUrl = 'https://staging.api.looneytunez.de';
-    // var baseUrl = 'https://api.looneytunez.de';
+    // var baseUrl = 'https://staging.api.looneytunez.de';
+    var baseUrl = 'https://api.looneytunez.de';
 
     var userName = 'boss';
 
